@@ -84,7 +84,7 @@ def create_app(test_config=None):
                 'id': book.id,
             })
         except:
-            abort(404)
+            abort(400)
 
     # @TODO: Write a route that will delete a single book.
     #        Response body keys: 'success', 'deleted'(id of deleted book), 'books' and 'total_books'
@@ -96,7 +96,9 @@ def create_app(test_config=None):
         try:
             book = Book.query.filter(Book.id==book_id).one_or_none()
             if book is None:
+                app.logger.info('+++++++ before errors')
                 abort(404)
+            app.logger.info('+++++++ after errors')
             book.delete()
             selection = Book.query.order_by(Book.id).all()
             current_books = paginate_books(request, selection)
@@ -107,6 +109,7 @@ def create_app(test_config=None):
                 'total_books': len(Book.query.all()),
             })
         except:
+            app.logger.info('+++++++ after excpet')
             abort(422)
 
     # @TODO: Write a route that create a new book.
@@ -136,5 +139,40 @@ def create_app(test_config=None):
             })
         except:
             abort(422)
+
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            'success': False,
+            'error': 400,
+            'message': 'bad request'
+        }), 400        
+        
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            'success':False,
+            'error': 404,
+            'message':'resource not found',
+        }), 404
+    
+    @app.errorhandler(405)
+    def unallowed_method(error):
+        return jsonify({
+            'success':False,
+            'error': 405,
+            'message':'method not allowed',
+        }), 405
+    
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            'success':False,
+            'error': 422,
+            'message':'unprocessable',
+        }), 422
+
+
 
     return app

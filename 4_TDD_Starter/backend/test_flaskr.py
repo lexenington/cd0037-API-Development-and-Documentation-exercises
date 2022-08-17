@@ -16,7 +16,7 @@ class BookTestCase(unittest.TestCase):
         self.client = self.app.test_client
         self.database_name = "bookshelf_test"
         self.database_path = "postgresql://{}:{}@{}/{}".format(
-            "student", "student", "localhost:5432", self.database_name
+            "postgres", "victory", "localhost:5432", self.database_name
         )
         setup_db(self.app, self.database_path)
 
@@ -52,6 +52,23 @@ class BookTestCase(unittest.TestCase):
 
     # @TODO: Write tests for search - at minimum two
     #        that check a response when there are results and when there are none
+    def test_get_book_search_with_results(self):
+        res = self.client().post("/books", json={"search":"Novel"})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['total_books'])
+        self.assertEqual(len(data['books']), 1)
+
+    def test_get_book_search_without_results(self):
+        res = self.client().post('/books', json={'search': 'punduits'})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['total_books'], 0)
+        self.assertEqual(len(data['books']), 0)
 
     def test_update_book_rating(self):
         res = self.client().patch("/books/5", json={"rating": 1})
